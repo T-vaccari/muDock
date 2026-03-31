@@ -1,4 +1,5 @@
 CompileFlags:
+  CompilationDatabase: build/linux-debug
   Remove:
     - -forward-unknown-to-host-compiler
     - --options-file
@@ -12,4 +13,3 @@ CompileFlags:
     - std=c++20
   Add:
     - -D__HIP_PLATFORM_NVIDIA__
-
