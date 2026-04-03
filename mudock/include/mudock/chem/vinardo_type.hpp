@@ -108,8 +108,4 @@ namespace mudock{
       {vinardo_atom_type::Iron,                           ad_lookup_table_input_type::Fe, 1.2f, false, true,  false},
       {vinardo_atom_type::GenericMetal,                   ad_lookup_table_input_type::GenericMetal,  1.2f, false, true,  false}
    };
-   
-   // Note : autodock_ff is not a 1:1 match: for oxygen, muDock exposes OA/OS but not O.
-   // So ad_lookup_table_input_type::O as now it's not reachable
-   //As now we have some types that are declared unsupported, but for istance OS can point towards O
 };

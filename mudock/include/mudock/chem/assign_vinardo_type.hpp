@@ -17,15 +17,18 @@ namespace mudock {
   template<class container_aliases, typename T>
   using atoms_array_type = typename container_aliases::template atoms_size<T>;
 
-   [[nodiscard]] inline ad_lookup_table_input_type normalize_autodock_type(const autodock_ff type) {
+   [[nodiscard]] inline ad_lookup_table_input_type normalize_autodock_to_vinardo_lookup(const autodock_ff type) {
       switch (type) {
          case autodock_ff::H:  return ad_lookup_table_input_type::H;
          case autodock_ff::HD: return ad_lookup_table_input_type::HD;
+         case autodock_ff::HS: return ad_lookup_table_input_type::HD;
          case autodock_ff::C:  return ad_lookup_table_input_type::C;
          case autodock_ff::A:  return ad_lookup_table_input_type::A;
          case autodock_ff::N:  return ad_lookup_table_input_type::N;
+         case autodock_ff::NS: return ad_lookup_table_input_type::NA;
          case autodock_ff::NA: return ad_lookup_table_input_type::NA;
          case autodock_ff::OA: return ad_lookup_table_input_type::OA;
+         case autodock_ff::OS: return ad_lookup_table_input_type::OA;
          case autodock_ff::S:  return ad_lookup_table_input_type::S;
          case autodock_ff::SA: return ad_lookup_table_input_type::SA;
          case autodock_ff::P:  return ad_lookup_table_input_type::P;
@@ -53,10 +56,7 @@ namespace mudock {
          case autodock_ff::Ni:
             return ad_lookup_table_input_type::GenericMetal;
 
-         // Not mapped yet
-         // case autodock_ff::HS:
-         // case autodock_ff::NS:
-         // case autodock_ff::OS:
+         // Unsupported Types 
          // case autodock_ff::He:
          // case autodock_ff::Ne:
          // case autodock_ff::Al:
@@ -180,7 +180,7 @@ namespace mudock {
             return vinardo_data[i];
          }
       }
-      throw std::runtime_error("TODO : Fix the unsupported types");
+      throw std::runtime_error("get_vinardo_info: no entry found for vinardo_atom_type " + std::to_string(static_cast<int>(type)));
    }
 
   template<class container_aliases>
@@ -202,9 +202,9 @@ namespace mudock {
       const auto types = molecule.get_autodock_type();
       for (std::size_t i = 0; i < molecule.num_atoms(); ++i) {
          const autodock_ff ad_type = types[i];
-         const ad_lookup_table_input_type lookup_type = normalize_autodock_type(ad_type);
+         const ad_lookup_table_input_type lookup_type = normalize_autodock_to_vinardo_lookup(ad_type);
          if (lookup_type == ad_lookup_table_input_type::Unsupported) {
-            throw std::runtime_error("Unsupported autodock_ff for Vinardo conversion");
+            throw std::runtime_error("Unsupported autodock_ff for Vinardo conversion: " + std::to_string(static_cast<int>(ad_type)));
          }
          for(int j = 0; j < static_cast<int>(vinardo_atom_type::NumTypes); j++){
             if(vinardo_data[j].ad_type == lookup_type){
@@ -212,8 +212,6 @@ namespace mudock {
                break; //I take only the first match
             }
          }
-         //TODO: Handle unsupported types
-   
       }
       //Now i need to resolve the ambiguity using the graph
 

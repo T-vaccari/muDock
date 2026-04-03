@@ -13,3 +13,4 @@ CompileFlags:
     - std=c++20
   Add:
     - -D__HIP_PLATFORM_NVIDIA__
+
