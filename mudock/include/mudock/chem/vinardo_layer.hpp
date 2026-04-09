@@ -42,6 +42,7 @@ namespace mudock{
          prepare(molecule);
       }
 
+      private: 
       void prepare(molecule_type& molecule){
          // Assign the Vinardo type and populate properties
          assign_vinardo_type(
@@ -54,7 +55,7 @@ namespace mudock{
          );
       }
       
-
+      public:
       //Minimal getters
       [[nodiscard]] inline auto get_vinardo_type() const {
          return make_span(atom_vinardo_type, this->get_base_molecule().num_atoms());
@@ -70,6 +71,15 @@ namespace mudock{
       [[nodiscard]] inline auto get_is_hbond_acceptor() const {
          return make_span(atom_is_hbond_acceptor, this->get_base_molecule().num_atoms());
       }
+      
+      [[nodiscard]] inline auto get_radius() const {
+         return make_span(atom_radius, this->get_base_molecule().num_atoms());
+      }
+
+      [[nodiscard]] inline auto num_atoms() const { 
+         return this->get_base_molecule().num_atoms(); 
+      }
+
 
 
 
@@ -78,7 +88,6 @@ namespace mudock{
       //ft_type it's an alias for floating point type
       atoms_array_type<vinardo_atom_type> atom_vinardo_type;
       atoms_array_type<fp_type> atom_radius;
-
       
       atoms_array_type<std::uint8_t> atom_is_hydrophobic;
       atoms_array_type<std::uint8_t> atom_is_hbond_donor;
