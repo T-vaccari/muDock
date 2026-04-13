@@ -11,7 +11,7 @@
 
 
 namespace mudock{
-
+//TODO : Insert utility 
 struct vinardo_protein_ligand_pair {
    int protein_atom_idx;
    int ligand_atom_idx;
@@ -131,7 +131,7 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(vinardo_layer<mudock::d
    vinardo_preprocessed_pairs result;
 
    //The first batch of couples is trivially the cartesian product of the set of protein atoms and the set of ligand atoms.
-   std::vector<vinardo_protein_ligand_pair> pl_pairs ;
+   std::vector<vinardo_protein_ligand_pair> pl_pairs;
    pl_pairs.reserve(static_cast<std::size_t>(protein_layer.num_atoms()) *
                     static_cast<std::size_t>(ligand_layer.num_atoms()));
    for(std::size_t i = 0; i < static_cast<std::size_t>(protein_layer.num_atoms()); ++i){

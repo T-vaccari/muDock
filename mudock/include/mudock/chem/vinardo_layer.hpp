@@ -86,6 +86,7 @@ namespace mudock{
       private:
       //Here i need to declare the attributes needed 
       //ft_type it's an alias for floating point type
+      //TODO : Maybe in molecule?
       atoms_array_type<vinardo_atom_type> atom_vinardo_type;
       atoms_array_type<fp_type> atom_radius;
       
