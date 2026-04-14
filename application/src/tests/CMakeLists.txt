@@ -30,3 +30,16 @@ set_target_properties(
               CXX_STANDARD_REQUIRED ON
               CXX_EXTENSIONS OFF)
 target_link_libraries(test_score_adt_impl libmudock Boost::program_options)
+
+add_executable_mudock(test_vinardo_smoke
+                      "${CMAKE_CURRENT_SOURCE_DIR}/vinardo_smoke_test.cpp")
+target_include_directories(test_vinardo_smoke
+                            PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set_target_properties(
+  test_vinardo_smoke
+  PROPERTIES CXX_STANDARD 20
+              CXX_STANDARD_REQUIRED ON
+              CXX_EXTENSIONS OFF)
+target_compile_definitions(test_vinardo_smoke
+                           PRIVATE MUDOCK_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_link_libraries(test_vinardo_smoke libmudock)

@@ -200,13 +200,13 @@ namespace mudock {
       //Here i need the code logic to convert an autodock atom type to a vinardo atom type
       
       const auto types = molecule.get_autodock_type();
-      for (std::size_t i = 0; i < molecule.num_atoms(); ++i) {
+      for (std::size_t i = 0; i < static_cast<std::size_t>(molecule.num_atoms()); ++i) {
          const autodock_ff ad_type = types[i];
          const ad_lookup_table_input_type lookup_type = normalize_autodock_to_vinardo_lookup(ad_type);
          if (lookup_type == ad_lookup_table_input_type::Unsupported) {
             throw std::runtime_error("Unsupported autodock_ff for Vinardo conversion: " + std::to_string(static_cast<int>(ad_type)));
          }
-         for(int j = 0; j < static_cast<int>(vinardo_atom_type::NumTypes); j++){
+         for(std::size_t j = 0; j < static_cast<std::size_t>(vinardo_atom_type::NumTypes); j++){
             if(vinardo_data[j].ad_type == lookup_type){
                atom_vinardo_type[i] = vinardo_data[j].vd_type;
                break; //I take only the first match
@@ -215,7 +215,7 @@ namespace mudock {
       }
       //Now i need to resolve the ambiguity using the graph
 
-      for(std::size_t i = 0; i < molecule.num_atoms(); ++i){
+      for(std::size_t i = 0; i < static_cast<std::size_t>(molecule.num_atoms()); ++i){
          atom_vinardo_type[i] = adjust_vinardo_type(atom_vinardo_type, graph, i);
          //Now I can compile the field in the layer
          const auto& info = get_vinardo_info(atom_vinardo_type[i]);
