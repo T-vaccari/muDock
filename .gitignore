@@ -4,3 +4,7 @@ build*/
 .gdb_history
 *.o
 *.a
+
+# Benchmark artifacts for Vinardo testing
+benchmark/test*/
+!data/vinardo-testing/compare-dump.ipynb

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 
 
@@ -108,4 +109,39 @@ namespace mudock{
       {vinardo_atom_type::Iron,                           ad_lookup_table_input_type::Fe, 1.2f, false, true,  false},
       {vinardo_atom_type::GenericMetal,                   ad_lookup_table_input_type::GenericMetal,  1.2f, false, true,  false}
    };
+
+   //Needed to dump the type as a string
+   [[nodiscard]] inline std::string_view to_string(const vinardo_atom_type type) {
+      switch (type) {
+         case vinardo_atom_type::Hydrogen: return "Hydrogen";
+         case vinardo_atom_type::PolarHydrogen: return "PolarHydrogen";
+         case vinardo_atom_type::AliphaticCarbonXSHydrophobe: return "AliphaticCarbonXSHydrophobe";
+         case vinardo_atom_type::AliphaticCarbonXSNonHydrophobe: return "AliphaticCarbonXSNonHydrophobe";
+         case vinardo_atom_type::AromaticCarbonXSHydrophobe: return "AromaticCarbonXSHydrophobe";
+         case vinardo_atom_type::AromaticCarbonXSNonHydrophobe: return "AromaticCarbonXSNonHydrophobe";
+         case vinardo_atom_type::Nitrogen: return "Nitrogen";
+         case vinardo_atom_type::NitrogenXSDonor: return "NitrogenXSDonor";
+         case vinardo_atom_type::NitrogenXSDonorAcceptor: return "NitrogenXSDonorAcceptor";
+         case vinardo_atom_type::NitrogenXSAcceptor: return "NitrogenXSAcceptor";
+         case vinardo_atom_type::Oxygen: return "Oxygen";
+         case vinardo_atom_type::OxygenXSDonor: return "OxygenXSDonor";
+         case vinardo_atom_type::OxygenXSDonorAcceptor: return "OxygenXSDonorAcceptor";
+         case vinardo_atom_type::OxygenXSAcceptor: return "OxygenXSAcceptor";
+         case vinardo_atom_type::Sulfur: return "Sulfur";
+         case vinardo_atom_type::SulfurAcceptor: return "SulfurAcceptor";
+         case vinardo_atom_type::Phosphorus: return "Phosphorus";
+         case vinardo_atom_type::Fluorine: return "Fluorine";
+         case vinardo_atom_type::Chlorine: return "Chlorine";
+         case vinardo_atom_type::Bromine: return "Bromine";
+         case vinardo_atom_type::Iodine: return "Iodine";
+         case vinardo_atom_type::Magnesium: return "Magnesium";
+         case vinardo_atom_type::Manganese: return "Manganese";
+         case vinardo_atom_type::Zinc: return "Zinc";
+         case vinardo_atom_type::Calcium: return "Calcium";
+         case vinardo_atom_type::Iron: return "Iron";
+         case vinardo_atom_type::GenericMetal: return "GenericMetal";
+         case vinardo_atom_type::NumTypes: return "NumTypes";
+      }
+      return "Unknown";
+   }
 };

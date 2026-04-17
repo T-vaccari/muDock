@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <cstdint>
 #include <mudock/chem/autodock_types.hpp>
 #include <mudock/chem/elements.hpp>
 #include <mudock/chem/grid_const.hpp>
@@ -42,6 +43,7 @@ namespace mudock {
     int bonds_size = int{0};
 
     atoms_array_type<autodock_ff> atom_autodock_type;
+    atoms_array_type<std::uint32_t> atom_id; //Atom id needed to match after dump
     atoms_array_type<int> atom_is_aromatic;
     atoms_array_type<fp_type> atom_charge;
     atoms_array_type<int> atom_num_hbond;
@@ -91,11 +93,13 @@ namespace mudock {
 
     // utility functions to get the span of the whole molecule (read + write)
     [[nodiscard]] inline auto get_autodock_type() { return make_span(atom_autodock_type, atoms_size); }
+    [[nodiscard]] inline auto get_atom_id() { return make_span(atom_id, atoms_size); }
     [[nodiscard]] inline auto get_elements() { return make_span(atom_elements, atoms_size); }
     [[nodiscard]] inline auto get_x() { return make_span(x_coordinates, atoms_size); }
     [[nodiscard]] inline auto get_y() { return make_span(y_coordinates, atoms_size); }
     [[nodiscard]] inline auto get_z() { return make_span(z_coordinates, atoms_size); }
     [[nodiscard]] inline auto get_autodock_type() const { return make_span(atom_autodock_type, atoms_size); }
+    [[nodiscard]] inline auto get_atom_id() const { return make_span(atom_id, atoms_size); }
     [[nodiscard]] inline auto get_is_aromatic() const { return make_span(atom_is_aromatic, atoms_size); }
     [[nodiscard]] inline auto get_charge() const { return make_span(atom_charge, atoms_size); }
     [[nodiscard]] inline auto get_num_hbond() const { return make_span(atom_num_hbond, atoms_size); }
@@ -109,6 +113,7 @@ namespace mudock {
 
     // utility functions to get the ref to an atom element (read + write)
     [[nodiscard]] inline auto& autodock_type(const int index) { return atom_autodock_type[index]; }
+    [[nodiscard]] inline auto& atom_id_at(const int index) { return atom_id[index]; }
     [[nodiscard]] inline auto& is_aromatic(const int index) { return atom_is_aromatic[index]; }
     [[nodiscard]] inline auto& elements(const int index) { return atom_elements[index]; }
     [[nodiscard]] inline auto& x(const int index) { return x_coordinates[index]; }
@@ -119,6 +124,7 @@ namespace mudock {
 
     // utility functions to get the ref to an atom element (read + write)
     [[nodiscard]] inline auto* autodock_type() { return atom_autodock_type.data(); }
+    [[nodiscard]] inline auto* atom_id_data() { return atom_id.data(); }
     [[nodiscard]] inline auto* is_aromatic() { return atom_is_aromatic.data(); }
     [[nodiscard]] inline auto* elements() { return atom_elements.data(); }
     [[nodiscard]] inline auto* x() { return x_coordinates.data(); }
@@ -131,6 +137,7 @@ namespace mudock {
     [[nodiscard]] inline const auto& autodock_type(const int index) const {
       return atom_autodock_type[index];
     }
+    [[nodiscard]] inline const auto& atom_id_at(const int index) const { return atom_id[index]; }
     [[nodiscard]] inline const auto& is_aromatic(const int index) const { return atom_is_aromatic[index]; }
     [[nodiscard]] inline const auto& elements(const int index) const { return atom_elements[index]; }
     [[nodiscard]] inline const auto& x(const int index) const { return x_coordinates[index]; }
@@ -169,6 +176,7 @@ namespace mudock {
     mudock::resize(z_coordinates, n_atoms);
     mudock::resize(bond_descriptions, n_bonds);
     mudock::resize(atom_autodock_type, n_atoms);
+    mudock::resize(atom_id, n_atoms);
     mudock::resize(atom_is_aromatic, n_atoms);
     mudock::resize(atom_charge, n_atoms);
     mudock::resize(atom_num_hbond, n_atoms);
@@ -185,6 +193,7 @@ namespace mudock {
     mudock::remove_atom(z_coordinates, index);
     mudock::resize(bond_descriptions, index);
     mudock::resize(atom_autodock_type, index);
+    mudock::resize(atom_id, index);
     mudock::resize(atom_is_aromatic, index);
     mudock::resize(atom_charge, index);
     mudock::resize(atom_num_hbond, index);
