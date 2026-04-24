@@ -6,5 +6,5 @@ build*/
 *.a
 
 # Benchmark artifacts for Vinardo testing
-benchmark/test*/
+benchmark/
 !data/vinardo-testing/compare-dump.ipynb
