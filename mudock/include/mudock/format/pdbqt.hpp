@@ -18,8 +18,9 @@ namespace mudock {
 
     std::string_view::size_type next_molecule_start_index(std::string_view text) const;
   };
-  // The following function relies on the same order of atom loading and file
-  // FIXME use the same approach as for the check rotor
+  // The following function relies on the same order of atom loading and file.
+  // FIXME use the same approach as for the check rotor.
+  //Note: here I am assuming that the relative order between atoms was not changed by OpenBabel in the Obmol type 
   template<class molecule_type>
     requires std::derived_from<molecule_type, autodock_static_layer> ||
              std::derived_from<molecule_type, autodock_dynamic_layer>
@@ -39,13 +40,15 @@ namespace mudock {
         // What if PDBQT is standardized..
         if (line.size() < 79)
           line += " ";
+        //Retrieve Atom Id from the raw file
+        const auto atom_id = static_cast<std::uint32_t>(std::stoul(line.substr(6, 5)));
         std::string adt_value = line.substr(77, 2);
         assert(adt_value.size() == 2);
         if (adt_value[1] == ' ')
           adt_value.pop_back();
         // FIX ME add check that the order of atoms is the same
-
         const auto adt                  = parse_autodock_type(adt_value);
+        molecule().atom_id_at(index)    = atom_id;  //Insert the id
         molecule().autodock_type(index) = adt;
         const auto& ff_entry            = get_description(adt);
         // molecule.autodock_type(index)   = ff_entry.value;

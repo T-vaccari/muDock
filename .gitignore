@@ -4,3 +4,6 @@ build*/
 .gdb_history
 *.o
 *.a
+
+# Benchmark artifacts for Vinardo testing
+benchmark/
