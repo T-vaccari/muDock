@@ -7,6 +7,8 @@
 #include <mudock/format/reader.hpp>
 #include <mudock/molecule.hpp>
 #include <mudock/molecule/containers.hpp>
+#include <mudock/compute/vinardo_score.hpp>
+
 // To compile&build
 // cmake -S /workspaces/muDock -B /workspaces/muDock/build/linux-debug -DMUDOCK_ENABLE_TEST=ON
 // cmake --build /workspaces/muDock/build/linux-debug --target test_vinardo_smoke

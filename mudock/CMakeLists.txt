@@ -26,6 +26,7 @@ list(
   "${header_path}/${header_prefix}/chem/assign_vinardo_type.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_type.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_layer.hpp"
+  "${header_path}/${header_prefix}/compute/vinardo_score.hpp"
   "${header_path}/${header_prefix}/compute/safe_stack.hpp"
   "${header_path}/${header_prefix}/compute/parse_ids.hpp"
   "${header_path}/${header_prefix}/compute/reorder_buffer.hpp"
@@ -129,6 +130,7 @@ list(
   "${source_path}/tbb_implementation/stream_filter.cpp"
   "${source_path}/tbb_implementation/parser_filter.cpp"
   "${source_path}/tbb_implementation/tbb_pipeline.cpp"
+  "${source_path}/cpp_implementation/vinardo_score_cpp.cpp"
 )
 
 if(MUDOCK_ENABLE_MPI)
