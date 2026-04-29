@@ -8,6 +8,8 @@
 #include <mudock/molecule.hpp>
 #include <mudock/molecule/containers.hpp>
 #include <mudock/compute/vinardo_score.hpp>
+#include <mudock/chem/vinardo_smina_helpers.hpp>
+
 
 // To compile&build
 // cmake -S /workspaces/muDock -B /workspaces/muDock/build/linux-debug -DMUDOCK_ENABLE_TEST=ON

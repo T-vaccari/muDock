@@ -108,4 +108,8 @@ namespace mudock{
       {vinardo_atom_type::Iron,                           ad_lookup_table_input_type::Fe, 1.2f, false, true,  false},
       {vinardo_atom_type::GenericMetal,                   ad_lookup_table_input_type::GenericMetal,  1.2f, false, true,  false}
    };
+
+   [[nodiscard]] inline bool is_hydrogen(const vinardo_atom_type type) {
+      return type == vinardo_atom_type::Hydrogen || type == vinardo_atom_type::PolarHydrogen;
+   }
 };
