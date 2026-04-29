@@ -27,6 +27,7 @@ list(
   "${header_path}/${header_prefix}/chem/vinardo_type.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_layer.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_smina_helpers.hpp"
+  "${header_path}/${header_prefix}/compute/vinardo_affinity.hpp"
   "${header_path}/${header_prefix}/compute/vinardo_score.hpp"
   "${header_path}/${header_prefix}/compute/safe_stack.hpp"
   "${header_path}/${header_prefix}/compute/parse_ids.hpp"
@@ -133,6 +134,7 @@ list(
   "${source_path}/tbb_implementation/stream_filter.cpp"
   "${source_path}/tbb_implementation/parser_filter.cpp"
   "${source_path}/tbb_implementation/tbb_pipeline.cpp"
+  "${source_path}/cpp_implementation/vinardo_affinity_cpp.cpp"
   "${source_path}/cpp_implementation/vinardo_score_cpp.cpp"
   "${source_path}/cpp_implementation/vinardo_smina_helpers.cpp"
 )

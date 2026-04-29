@@ -1,4 +1,6 @@
 #include <cassert>
+#include <cmath>
+#include <vector>
 
 #include <mudock/chem/vinardo_preprocessing.hpp>
 #include <mudock/chem/assign_autodock_types.hpp>
@@ -7,6 +9,7 @@
 #include <mudock/format/reader.hpp>
 #include <mudock/molecule.hpp>
 #include <mudock/molecule/containers.hpp>
+#include <mudock/compute/vinardo_affinity.hpp>
 #include <mudock/compute/vinardo_score.hpp>
 #include <mudock/chem/vinardo_smina_helpers.hpp>
 
@@ -21,8 +24,6 @@
 
 
 int main() {
-  //Currently building on another branch a pipeline to test the atom typing 
-  // and pre processing against the reference implementation(smina)
   
 
   return 0;
