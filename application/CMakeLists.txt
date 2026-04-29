@@ -168,6 +168,17 @@ target_link_libraries(dump_preprocessing libmudock)
 target_compile_options(dump_preprocessing PRIVATE -fno-plt)
 target_link_options(dump_preprocessing PRIVATE -Wl,-z,now)
 
+add_executable_mudock(dump_scoring_pairs
+                      "${CMAKE_CURRENT_SOURCE_DIR}/src/dump_scoring_pairs.cpp")
+set_target_properties(
+  dump_scoring_pairs
+  PROPERTIES CXX_STANDARD 20
+             CXX_STANDARD_REQUIRED ON
+             CXX_EXTENSIONS OFF)
+target_link_libraries(dump_scoring_pairs libmudock)
+target_compile_options(dump_scoring_pairs PRIVATE -fno-plt)
+target_link_options(dump_scoring_pairs PRIVATE -Wl,-z,now)
+
 # ##############################################################################
 # ### Declare the install step
 # ##############################################################################
