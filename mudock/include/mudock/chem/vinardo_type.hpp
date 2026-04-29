@@ -144,4 +144,8 @@ namespace mudock{
       }
       return "Unknown";
    }
+
+   [[nodiscard]] inline bool is_hydrogen(const vinardo_atom_type type) {
+      return type == vinardo_atom_type::Hydrogen || type == vinardo_atom_type::PolarHydrogen;
+   }
 };

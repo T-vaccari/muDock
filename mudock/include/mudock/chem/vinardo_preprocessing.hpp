@@ -50,9 +50,11 @@ inline void append_protein_ligand_pairs(std::vector<vinardo_protein_ligand_pair>
                                         const auto& protein_donor,
                                         const auto& protein_acceptor,
                                         const auto& protein_hydro,
+                                        const auto& protein_types,
                                         const auto& ligand_donor,
                                         const auto& ligand_acceptor,
-                                        const auto& ligand_hydro) {
+                                        const auto& ligand_hydro,
+                                        const auto& ligand_types) {
    const auto protein_atoms = static_cast<std::size_t>(protein_layer.num_atoms());
    const auto ligand_atoms = static_cast<std::size_t>(ligand_layer.num_atoms());
 
@@ -60,9 +62,7 @@ inline void append_protein_ligand_pairs(std::vector<vinardo_protein_ligand_pair>
    for (std::size_t i = 0; i < protein_atoms; ++i) {
       for (std::size_t j = 0; j < ligand_atoms; ++j) {
          if constexpr (!include_hydrogens) {
-            //Only hydrogen and polar hydrogen have radius 0 so I can check this property
-            //Maybe comparing zeros in floating point it's a bit fragile, so I can insert a tolerance if needed.
-            if (protein_radii[i] == mudock::fp_type{0} || ligand_radii[j] == mudock::fp_type{0}) {
+            if (mudock::is_hydrogen(protein_types[i]) || mudock::is_hydrogen(ligand_types[j])) {
                continue;
             }
          }
@@ -85,6 +85,7 @@ inline void append_ligand_ligand_pairs(std::vector<vinardo_ligand_ligand_pair>& 
                                        const auto& ligand_donor,
                                        const auto& ligand_acceptor,
                                        const auto& ligand_hydro,
+                                       const auto& ligand_types,
                                        const std::vector<std::uint8_t>& relatively_movable,
                                        const std::vector<std::uint8_t>& within_three_bonds) {
    const auto num_atoms = static_cast<std::size_t>(ligand_layer.num_atoms());
@@ -93,7 +94,7 @@ inline void append_ligand_ligand_pairs(std::vector<vinardo_ligand_ligand_pair>& 
    for (std::size_t i = 0; i < num_atoms; ++i) {
       for (std::size_t j = i + 1; j < num_atoms; ++j) {
          if constexpr (!include_hydrogens) {
-            if (ligand_radii[i] == mudock::fp_type{0} || ligand_radii[j] == mudock::fp_type{0}) {
+            if (mudock::is_hydrogen(ligand_types[i]) || mudock::is_hydrogen(ligand_types[j])) {
                continue;
             }
          }
@@ -204,11 +205,14 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
    const auto protein_donor    = protein_layer.get_is_hbond_donor();
    const auto protein_acceptor = protein_layer.get_is_hbond_acceptor();
    const auto protein_hydro    = protein_layer.get_is_hydrophobic();
+   const auto protein_types    = protein_layer.get_vinardo_type();
    const auto ligand_donor    = ligand_layer.get_is_hbond_donor();
    const auto ligand_acceptor = ligand_layer.get_is_hbond_acceptor();
    const auto ligand_hydro    = ligand_layer.get_is_hydrophobic();
+   const auto ligand_types    = ligand_layer.get_vinardo_type();
 
    vinardo_preprocessed_pairs result;
+
    //Protein-Ligand Pairs: Cartesian product
    std::vector<vinardo_protein_ligand_pair> pl_pairs;
    if (options.include_hydrogens) {
@@ -220,9 +224,11 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
                                         protein_donor,
                                         protein_acceptor,
                                         protein_hydro,
+                                        protein_types,
                                         ligand_donor,
                                         ligand_acceptor,
-                                        ligand_hydro);
+                                        ligand_hydro,
+                                        ligand_types);
    } else {
       append_protein_ligand_pairs<false>(pl_pairs,
                                          protein_layer,
@@ -232,9 +238,11 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
                                          protein_donor,
                                          protein_acceptor,
                                          protein_hydro,
+                                         protein_types,
                                          ligand_donor,
                                          ligand_acceptor,
-                                         ligand_hydro);
+                                         ligand_hydro,
+                                         ligand_types);
    }
 
    //Assign the result to the output struct with move so i don't have to copy the vector.
@@ -260,6 +268,7 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
                                        ligand_donor,
                                        ligand_acceptor,
                                        ligand_hydro,
+                                       ligand_types,
                                        relatively_movable,
                                        within_three_bonds);
    } else {
@@ -269,6 +278,7 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
                                         ligand_donor,
                                         ligand_acceptor,
                                         ligand_hydro,
+                                        ligand_types,
                                         relatively_movable,
                                         within_three_bonds);
    }
