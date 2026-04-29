@@ -26,6 +26,7 @@ list(
   "${header_path}/${header_prefix}/chem/assign_vinardo_type.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_type.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_layer.hpp"
+  "${header_path}/${header_prefix}/chem/vinardo_smina_helpers.hpp"
   "${header_path}/${header_prefix}/compute/vinardo_score.hpp"
   "${header_path}/${header_prefix}/compute/safe_stack.hpp"
   "${header_path}/${header_prefix}/compute/parse_ids.hpp"
@@ -65,6 +66,7 @@ list(
   "${header_path}/${header_prefix}/format/adt_mol2.hpp"
   "${header_path}/${header_prefix}/format/writer.hpp"
   "${header_path}/${header_prefix}/format/pdbqt.hpp"
+  "${header_path}/${header_prefix}/format/pdbqt_torsion_tree.hpp"
   "${header_path}/${header_prefix}/format/reader.hpp"
   "${header_path}/${header_prefix}/format/ob_wrapper.hpp"
   "${header_path}/${header_prefix}/grid/pi.hpp"
@@ -116,6 +118,7 @@ list(
   "${source_path}/format/ob_wrapper.cpp"
   "${source_path}/format/pdb.cpp"
   "${source_path}/format/pdbqt.cpp"
+  "${source_path}/format/pdbqt_torsion_tree.cpp"
   "${source_path}/format/supported_format.cpp"
   "${source_path}/format/reader.cpp"
   "${source_path}/format/writer.cpp"
@@ -131,6 +134,7 @@ list(
   "${source_path}/tbb_implementation/parser_filter.cpp"
   "${source_path}/tbb_implementation/tbb_pipeline.cpp"
   "${source_path}/cpp_implementation/vinardo_score_cpp.cpp"
+  "${source_path}/cpp_implementation/vinardo_smina_helpers.cpp"
 )
 
 if(MUDOCK_ENABLE_MPI)
