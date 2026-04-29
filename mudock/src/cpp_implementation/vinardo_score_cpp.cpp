@@ -1,4 +1,5 @@
 #include <mudock/type_alias.hpp>
+#include <mudock/compute/vinardo_score.hpp>
 #include <mudock/chem/vinardo_preprocessing.hpp>
 #include <mudock/chem/vinardo_layer.hpp>
 #include <cmath>
@@ -29,7 +30,9 @@ namespace mudock {
       if (d <= p1) {
          return fp_type{1};
       } else if (d < p2) {
-         return fp_type{p2 - d};
+         // Paper formula: p2 - d. Smina implements the same interval as a normalized slope_step.
+         // return fp_type{p2 - d};
+         return (p2 - d) / (p2 - p1);
       }else {
          return fp_type{0};
       }
@@ -48,12 +51,53 @@ namespace mudock {
       }
    }
 
+   fp_type compute_vinardo_pair_energy(const fp_type surface_distance,
+                                       const bool hydrophobic_possible,
+                                       const bool hbond_possible) {
+      //Here we define the costants weights of the scoring function
+      constexpr fp_type w1 = -0.045;
+      constexpr fp_type w2 = 0.800;
+      constexpr fp_type w3 = -0.035;
+      constexpr fp_type w4 = -0.600;
 
-   fp_type vinardo_score(vinardo_layer<dynamic_containers>& protein,
-                        vinardo_layer<static_containers>& ligand,
-                        vinardo_preprocessed_pairs& preprocessed_pairs){
+      //We use this to avoid the if in the inner loop
+      const fp_type hydro_mask = static_cast<fp_type>(hydrophobic_possible);
+      const fp_type hbond_mask = static_cast<fp_type>(hbond_possible);
 
-      fp_type score = 0.0;
+      return w1 * gauss(surface_distance) + w2 * repulsion(surface_distance) +
+             hydro_mask * w3 * hydrophobic(surface_distance) + hbond_mask * w4 * hbond(surface_distance);
+   }
+
+   vinardo_pair_terms compute_vinardo_pair_terms(const fp_type surface_distance,
+                                                 const bool hydrophobic_possible,
+                                                 const bool hbond_possible) {
+      //Here we define the costants weights of the scoring function
+      constexpr fp_type w1 = -0.045;
+      constexpr fp_type w2 = 0.800;
+      constexpr fp_type w3 = -0.035;
+      constexpr fp_type w4 = -0.600;
+
+      //We use this to avoid the if in the inner loop
+      const fp_type hydro_mask = static_cast<fp_type>(hydrophobic_possible);
+      const fp_type hbond_mask = static_cast<fp_type>(hbond_possible);
+
+      vinardo_pair_terms terms{};
+      terms.gauss = gauss(surface_distance);
+      terms.repulsion = repulsion(surface_distance);
+      terms.hydrophobic = hydro_mask * hydrophobic(surface_distance);
+      terms.hbond = hbond_mask * hbond(surface_distance);
+      terms.weighted_gauss = w1 * terms.gauss;
+      terms.weighted_repulsion = w2 * terms.repulsion;
+      terms.weighted_hydrophobic = w3 * terms.hydrophobic;
+      terms.weighted_hbond = w4 * terms.hbond;
+      terms.weighted_energy = terms.weighted_gauss + terms.weighted_repulsion + terms.weighted_hydrophobic + terms.weighted_hbond;
+      return terms;
+   }
+
+   vinardo_score_breakdown compute_vinardo_score_breakdown(vinardo_layer<dynamic_containers>& protein,
+                                                           vinardo_layer<static_containers>& ligand,
+                                                           vinardo_preprocessed_pairs& preprocessed_pairs){
+
       fp_type pl_score = fp_type{0};
       fp_type ll_score = fp_type{0};
       auto& pl_pairs = preprocessed_pairs.protein_ligand_pairs;
@@ -66,12 +110,6 @@ namespace mudock {
       // where d is defined as surface distance and can be obtained by:
       // d = r_i_j - (R_i + R_j)
       //Where thr sum R_i and R_j is already precoumped for every couple and the distance between the two atoms has to be calculated
-
-      //Here we define the costants weights of the scoring function
-      constexpr fp_type w1 = -0.045;
-      constexpr fp_type w2 = 0.800;
-      constexpr fp_type w3 = -0.035;
-      constexpr fp_type w4 = -0.600;
 
       //Now we can process the protein-ligand pairs
 
@@ -90,11 +128,7 @@ namespace mudock {
             continue;
          }
 
-         //We use this to avoid the if in the inner loop 
-         const fp_type hydro_mask = static_cast<fp_type>(pair.hydrophobic_possible);
-         const fp_type hbond_mask = static_cast<fp_type>(pair.hbond_possible);
-
-         pl_score += w1 * gauss(d)+ w2 * repulsion(d) + hydro_mask * w3 * hydrophobic(d)+ hbond_mask * w4 * hbond(d);
+         pl_score += compute_vinardo_pair_energy(d, pair.hydrophobic_possible, pair.hbond_possible);
       }
 
 
@@ -113,14 +147,47 @@ namespace mudock {
             continue;
          }
 
-         //We use this to avoid the if in the inner loop 
-         const fp_type hydro_mask = static_cast<fp_type>(pair.hydrophobic_possible);
-         const fp_type hbond_mask = static_cast<fp_type>(pair.hbond_possible);
-
-         ll_score += w1 * gauss(d)+ w2 * repulsion(d) + hydro_mask * w3 * hydrophobic(d)+ hbond_mask * w4 * hbond(d);
+         ll_score += compute_vinardo_pair_energy(d, pair.hydrophobic_possible, pair.hbond_possible);
       }
 
-      score = pl_score + ll_score;
+      return vinardo_score_breakdown{pl_score, ll_score, pl_score + ll_score};
+   }
+
+   fp_type vinardo_score(vinardo_layer<dynamic_containers>& protein,
+                        vinardo_layer<static_containers>& ligand,
+                        vinardo_preprocessed_pairs& preprocessed_pairs){
+
+      fp_type score = fp_type{0};
+      auto& pl_pairs = preprocessed_pairs.protein_ligand_pairs;
+      auto& ll_pairs = preprocessed_pairs.ligand_ligand_pairs;
+
+      for(const auto& pair: pl_pairs){
+         const fp_type dx = protein().x(pair.protein_atom_idx) - ligand().x(pair.ligand_atom_idx);
+         const fp_type dy = protein().y(pair.protein_atom_idx) - ligand().y(pair.ligand_atom_idx);
+         const fp_type dz = protein().z(pair.protein_atom_idx) - ligand().z(pair.ligand_atom_idx);
+         const fp_type r_i_j = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+         if (r_i_j >= fp_type{8}) {
+            continue;
+         }
+
+         const fp_type d = r_i_j - pair.radius_sum;
+         score += compute_vinardo_pair_energy(d, pair.hydrophobic_possible, pair.hbond_possible);
+      }
+
+      for(const auto& pair: ll_pairs){
+         const fp_type dx = ligand().x(pair.ligand_atom_i_idx) - ligand().x(pair.ligand_atom_j_idx);
+         const fp_type dy = ligand().y(pair.ligand_atom_i_idx) - ligand().y(pair.ligand_atom_j_idx);
+         const fp_type dz = ligand().z(pair.ligand_atom_i_idx) - ligand().z(pair.ligand_atom_j_idx);
+         const fp_type r_i_j = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+         if (r_i_j >= fp_type{8}) {
+            continue;
+         }
+
+         const fp_type d = r_i_j - pair.radius_sum;
+         score += compute_vinardo_pair_energy(d, pair.hydrophobic_possible, pair.hbond_possible);
+      }
 
       return score;
    }
