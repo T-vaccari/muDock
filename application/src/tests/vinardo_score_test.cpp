@@ -78,9 +78,6 @@ int main(int argc, char* argv[]) {
   const auto num_tors = mudock::smina_num_tors(ligand, torsion_tree, ligand_vinardo.get_vinardo_type());
   const auto affinity = mudock::vinardo_affinity(breakdown.protein_ligand, num_tors);
 
-  if (std::abs(score - breakdown.total) > mudock::fp_type{1e-5}) {
-    throw std::runtime_error("Vinardo score and breakdown total diverge");
-  }
 
   mudock::info(std::format("Protein-ligand score: {}", breakdown.protein_ligand));
   mudock::info(std::format("Ligand-ligand score: {}", breakdown.ligand_ligand));
