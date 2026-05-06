@@ -1,11 +1,13 @@
 #pragma once  
 
-#include <mudock/molecule/fragments.hpp>
 #include <mudock/chem/vinardo_layer.hpp>
 #include <mudock/chem/vinardo_type.hpp>
+#include <mudock/molecule/graph.hpp>
 #include <mudock/type_alias.hpp>
 #include <queue>
 #include <span>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
 #include <cstdint>
 #include <utility>
@@ -33,10 +35,6 @@ struct vinardo_ligand_ligand_pair {
 struct vinardo_preprocessed_pairs {
    std::vector<vinardo_protein_ligand_pair> protein_ligand_pairs;
    std::vector<vinardo_ligand_ligand_pair> ligand_ligand_pairs;
-};
-
-struct vinardo_preprocess_options {
-   std::span<const std::uint8_t> relatively_movable_override = {};
 };
 
 inline void append_protein_ligand_pairs(std::vector<vinardo_protein_ligand_pair>& pl_pairs,
@@ -104,45 +102,16 @@ inline void append_ligand_ligand_pairs(std::vector<vinardo_ligand_ligand_pair>& 
    }
 }
 
-// To compute the relatively movable pairs, for each atom pair (i, j)
-// check whether there exists at least one rotatable bond whose fragment mask
-// places i and j on opposite sides.
-// If such a bond exists, the pair is relatively movable.
-// Otherwise, it is not relatively movable.
-// Note: ligand_fragments contains all the ligand cuts(partitions) induced by removing,
-// one at a time, each rotatable bond from the molecular graph.
-inline std::vector<std::uint8_t> precompute_rotatable_pairs(const mudock::fragments<mudock::static_containers>& ligand_fragments, const std::size_t num_atoms){
-   std::vector<std::uint8_t> relatively_movable(num_atoms * num_atoms, 0);
-   for (std::size_t i = 0; i < num_atoms; ++i) {
-      for (std::size_t j = i + 1; j < num_atoms; ++j) {
-         bool movable = false;
-         for (int rot_idx = 0; rot_idx < ligand_fragments.get_num_rotatable_bonds(); ++rot_idx) {
-            auto mask = ligand_fragments.get_mask(rot_idx);
-
-            if (!mudock::same_fragment(mask, i, j)) {
-               movable = true;
-               break;
-            }
-         }
-
-         if (movable) {
-            relatively_movable[i * num_atoms + j] = 1;
-            relatively_movable[j * num_atoms + i] = 1;
-         }
-      }
-   }
-   return relatively_movable;
-}
-
 inline std::vector<std::uint8_t> precompute_within_n_bonds(const auto& g, const std::size_t num_atoms, const std::size_t n){
+   using vertex_type = typename std::decay_t<decltype(g)>::vertex_descriptor;
    std::vector<std::uint8_t> within_n_bonds(num_atoms * num_atoms, 0);
 
    for(size_t i =0 ; i < num_atoms; ++i){
       //For each atom i, we perform a breadth first search up to depth n to find all atoms that are within n bonds from i.
-      std::queue<mudock::vertex_type> current_queue;
-      std::queue<mudock::vertex_type> next_queue;
+      std::queue<vertex_type> current_queue;
+      std::queue<vertex_type> next_queue;
 
-      current_queue.push(static_cast<mudock::vertex_type>(i));
+      current_queue.push(static_cast<vertex_type>(i));
       std::vector<std::uint8_t> visited(num_atoms,0);
       visited[i] = 1;
       // Note: this BFS assumes atom indices match graph vertex descriptors.
@@ -186,7 +155,7 @@ inline std::vector<std::uint8_t> precompute_within_n_bonds(const auto& g, const 
 inline vinardo_preprocessed_pairs preprocess_for_vinardo(
     vinardo_layer<mudock::dynamic_containers>& protein_layer,
     vinardo_layer<mudock::static_containers>& ligand_layer,
-    const vinardo_preprocess_options options = {}){
+    std::span<const std::uint8_t> relatively_movable_matrix){
     
 
     //Here I need to build the list of pairs of atoms that will be used for the vinardo scoring. 
@@ -230,14 +199,8 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
     auto graph = mudock::make_graph(ligand.get_bonds(), ligand.num_atoms());
     const auto num_atoms = static_cast<std::size_t>(ligand.num_atoms());
 
-   //Utils for the rotable edges
-    mudock::fragments<mudock::static_containers> ligand_fragments(graph, ligand.get_bonds(),ligand.num_atoms());
-
-    std::vector<std::uint8_t> default_relatively_movable;
-    std::span<const std::uint8_t> relatively_movable = options.relatively_movable_override;
-    if (relatively_movable.empty()) {
-        default_relatively_movable = precompute_rotatable_pairs(ligand_fragments, num_atoms);
-        relatively_movable = default_relatively_movable;
+    if (relatively_movable_matrix.size() != num_atoms * num_atoms) {
+        throw std::runtime_error("Vinardo preprocessing requires a ligand mobility matrix");
     }
     auto within_three_bonds = precompute_within_n_bonds(graph, num_atoms, 3);
 
@@ -248,7 +211,7 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
                                 ligand_donor,
                                 ligand_acceptor,
                                 ligand_hydro,
-                                relatively_movable,
+                                relatively_movable_matrix,
                                 within_three_bonds);
     result.ligand_ligand_pairs = std::move(ll_pairs);
 

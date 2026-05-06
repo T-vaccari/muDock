@@ -51,7 +51,7 @@ mudock::fp_type compute_vinardo_affinity(const std::filesystem::path& receptor_p
   auto preprocessed = mudock::preprocess_for_vinardo(
       protein_vinardo,
       ligand_vinardo,
-      mudock::vinardo_preprocess_options{std::span<const std::uint8_t>{smina_mobility}});
+      std::span<const std::uint8_t>{smina_mobility});
 
   const auto breakdown = mudock::compute_vinardo_score_breakdown(protein_vinardo, ligand_vinardo, preprocessed);
   const auto num_tors = mudock::smina_num_tors(ligand, torsion_tree, ligand_vinardo.get_vinardo_type());
