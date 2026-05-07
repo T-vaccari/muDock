@@ -10,7 +10,7 @@
 #include <mudock/molecule.hpp>
 #include <mudock/molecule/containers.hpp>
 #include <mudock/compute/vinardo_affinity.hpp>
-#include <mudock/compute/vinardo_score.hpp>
+#include <mudock/compute/vinardo_scoring_function.hpp>
 #include <mudock/chem/vinardo_smina_helpers.hpp>
 
 

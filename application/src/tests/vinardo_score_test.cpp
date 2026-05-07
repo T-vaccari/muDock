@@ -11,7 +11,7 @@
 #include <mudock/chem/vinardo_preprocessing.hpp>
 #include <mudock/chem/vinardo_smina_helpers.hpp>
 #include <mudock/compute/vinardo_affinity.hpp>
-#include <mudock/compute/vinardo_score.hpp>
+#include <mudock/compute/vinardo_scoring_function.hpp>
 #include <mudock/format/pdbqt.hpp>
 #include <mudock/format/pdbqt_torsion_tree.hpp>
 #include <mudock/format/reader.hpp>

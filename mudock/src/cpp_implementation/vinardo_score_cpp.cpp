@@ -1,5 +1,5 @@
 #include <mudock/type_alias.hpp>
-#include <mudock/compute/vinardo_score.hpp>
+#include <mudock/compute/vinardo_scoring_function.hpp>
 #include <mudock/chem/vinardo_preprocessing.hpp>
 #include <mudock/chem/vinardo_layer.hpp>
 #include <cmath>

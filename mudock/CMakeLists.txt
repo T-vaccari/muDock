@@ -28,7 +28,7 @@ list(
   "${header_path}/${header_prefix}/chem/vinardo_layer.hpp"
   "${header_path}/${header_prefix}/chem/vinardo_smina_helpers.hpp"
   "${header_path}/${header_prefix}/compute/vinardo_affinity.hpp"
-  "${header_path}/${header_prefix}/compute/vinardo_score.hpp"
+  "${header_path}/${header_prefix}/compute/vinardo_scoring_function.hpp"
   "${header_path}/${header_prefix}/compute/safe_stack.hpp"
   "${header_path}/${header_prefix}/compute/parse_ids.hpp"
   "${header_path}/${header_prefix}/compute/reorder_buffer.hpp"
