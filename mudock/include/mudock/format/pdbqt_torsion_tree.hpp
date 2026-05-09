@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <cstddef>
+#include <string_view>
 #include <vector>
 
 namespace mudock {
@@ -28,6 +29,12 @@ namespace mudock {
       std::size_t to_atom_index;
    };
 
+   struct pdbqt_ligand_info {
+      bool valid = false;
+      std::vector<std::uint8_t> mobility_matrix;
+      std::vector<pdbqt_rotor> rotors;
+   };
+
    struct pdbqt_torsion_tree {
       pdbqt_torsion_branch_node root;
       std::vector<pdbqt_torsion_branch_node> storage; //Need to return also the storage, otherwise pointer in the branches would be dangling.
@@ -35,5 +42,6 @@ namespace mudock {
    };
 
    [[nodiscard]] pdbqt_torsion_tree parse_pdbqt_torsion_tree(const std::filesystem::path& pdbqt_path);
+   [[nodiscard]] pdbqt_torsion_tree parse_pdbqt_torsion_tree(std::string_view pdbqt_description);
 
 } // namespace mudock

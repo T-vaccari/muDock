@@ -6,19 +6,16 @@
 #include <fstream>
 #include <format>
 #include <iostream>
+#include <command_line_args.hpp>
 #include <mudock/chem/autodock_layer.hpp>
-#include <mudock/chem/vinardo_layer.hpp>
-#include <mudock/chem/vinardo_preprocessing.hpp>
-#include <mudock/chem/vinardo_smina_helpers.hpp>
-#include <mudock/compute/vinardo_affinity.hpp>
-#include <mudock/compute/vinardo_scoring_function.hpp>
+#include <mudock/compute/manager.hpp>
+#include <mudock/compute/pipeline.hpp>
+#include <mudock/cpp_implementation/vinardo_score_kernel_cpp.hpp>
 #include <mudock/format/pdbqt.hpp>
-#include <mudock/format/pdbqt_torsion_tree.hpp>
 #include <mudock/format/reader.hpp>
 #include <mudock/log.hpp>
 #include <mudock/molecule.hpp>
 #include <mudock/molecule/containers.hpp>
-#include <span>
 #include <stdexcept>
 #include <sstream>
 
@@ -27,35 +24,51 @@ namespace {
 mudock::fp_type compute_vinardo_affinity(const std::filesystem::path& receptor_path,
                                          const std::filesystem::path& ligand_path) {
   mudock::info("Reading and parsing protein ", receptor_path, " ...");
-  auto protein = mudock::parser<mudock::dynamic_molecule>(receptor_path);
+  auto protein =
+      std::make_shared<mudock::dynamic_molecule>(mudock::parser<mudock::dynamic_molecule>(receptor_path));
 
   mudock::info("Reading and parsing ligand ", ligand_path, " ...");
-  auto ligand = mudock::parser<mudock::static_molecule>(ligand_path, &mudock::pdbqt_rotate_check);
+  auto ligand = std::make_unique<mudock::static_molecule>(
+      mudock::parser<mudock::static_molecule>(ligand_path, &mudock::pdbqt_rotate_check));
 
   [[maybe_unused]] mudock::autodock_dynamic_layer protein_autodock{
-      protein,
+      *protein,
       [receptor_path](mudock::autodock_dynamic_layer& layer) {
         mudock::apply_autodock_forcefield_pdbqt(layer, receptor_path);
       }};
   [[maybe_unused]] mudock::autodock_static_layer ligand_autodock{
-      ligand,
+      *ligand,
       [ligand_path](mudock::autodock_static_layer& layer) {
         mudock::apply_autodock_forcefield_pdbqt(layer, ligand_path);
       }};
 
-  mudock::vinardo_layer<mudock::dynamic_containers> protein_vinardo{protein};
-  mudock::vinardo_layer<mudock::static_containers> ligand_vinardo{ligand};
+  if (!ligand->pdbqt_ligand_data.valid) {
+    throw std::runtime_error("Missing PDBQT ligand data");
+  }
 
-  const auto torsion_tree = mudock::parse_pdbqt_torsion_tree(ligand_path);
-  const auto smina_mobility = mudock::build_smina_mobility_matrix(ligand, torsion_tree);
-  auto preprocessed = mudock::preprocess_for_vinardo(
-      protein_vinardo,
-      ligand_vinardo,
-      std::span<const std::uint8_t>{smina_mobility});
+  mudock::knobs conf;
+  conf.population_number = 2;
+  //Instantitate the scoring pipeline and the queues
+  //as done in the adt test
+  mudock::vinardo_score_pipeline pipeline{protein};
+  auto output_queue = std::make_shared<mudock::safe_queue<mudock::static_molecule>>();
+  auto input_queue  = std::make_shared<mudock::safe_queue<mudock::static_molecule>>();
+  input_queue->enqueue(ligand);
+  input_queue->send_terminate_signal();
+  {
+    auto threadpool = mudock::threadpool();
+    mudock::manager({std::string{use_cpu_conf}}, threadpool, conf, input_queue, output_queue, pipeline);
+  }
+  output_queue->send_terminate_signal();
+  auto ligand_out = output_queue->dequeue();
+  if (!ligand_out) {
+    throw std::runtime_error("Missing scored ligand");
+  }
 
-  const auto breakdown = mudock::compute_vinardo_score_breakdown(protein_vinardo, ligand_vinardo, preprocessed);
-  const auto num_tors = mudock::smina_num_tors(ligand, torsion_tree, ligand_vinardo.get_vinardo_type());
-  return mudock::vinardo_affinity(breakdown.protein_ligand, num_tors);
+  std::stringstream ss{ligand_out->properties.get(mudock::property_type::SCORE)};
+  mudock::fp_type score{};
+  ss >> score;
+  return score;
 }
 
 } // namespace

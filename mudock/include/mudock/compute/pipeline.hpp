@@ -7,6 +7,7 @@
 #include <mudock/compute/genetic.hpp>
 #include <mudock/compute/scratchpad.hpp>
 #include <mudock/compute/stage.hpp>
+#include <mudock/compute/vinardo_score.hpp>
 #include <mudock/devices.hpp>
 #include <mudock/molecule.hpp>
 
@@ -124,4 +125,6 @@ namespace mudock {
 
   using adt_score_pipeline   = scoring_pipeline<adt_score>;
   using genetic_adt_pipeline = genetic_scoring_pipeline<adt_score>;
+  using vinardo_score_pipeline   = scoring_pipeline<vinardo_score>;
+  using genetic_vinardo_pipeline = genetic_scoring_pipeline<vinardo_score>;
 } // namespace mudock

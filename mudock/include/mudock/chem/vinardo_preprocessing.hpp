@@ -15,7 +15,8 @@
 
 
 namespace mudock{
-//TODO : Insert utility 
+
+
 struct vinardo_protein_ligand_pair {
    int protein_atom_idx;
    int ligand_atom_idx;
@@ -32,10 +33,7 @@ struct vinardo_ligand_ligand_pair {
    mudock::fp_type radius_sum;
 };
 
-struct vinardo_preprocessed_pairs {
-   std::vector<vinardo_protein_ligand_pair> protein_ligand_pairs;
-   std::vector<vinardo_ligand_ligand_pair> ligand_ligand_pairs;
-};
+
 
 inline void append_protein_ligand_pairs(std::vector<vinardo_protein_ligand_pair>& pl_pairs,
                                         const vinardo_layer<mudock::dynamic_containers>& protein_layer,
@@ -152,30 +150,52 @@ inline std::vector<std::uint8_t> precompute_within_n_bonds(const auto& g, const 
    return within_n_bonds;
 }
 
-inline vinardo_preprocessed_pairs preprocess_for_vinardo(
-    vinardo_layer<mudock::dynamic_containers>& protein_layer,
-    vinardo_layer<mudock::static_containers>& ligand_layer,
-    std::span<const std::uint8_t> relatively_movable_matrix){
-    
+inline std::vector<vinardo_ligand_ligand_pair> 
+      preprocess_ligand_vinardo(vinardo_layer<mudock::static_containers>& ligand_layer,
+                                 std::span<const std::uint8_t> relatively_movable_matrix) {
+   const auto ligand_radii    = ligand_layer.get_radius();
+   const auto ligand_donor    = ligand_layer.get_is_hbond_donor();
+   const auto ligand_acceptor = ligand_layer.get_is_hbond_acceptor();
+   const auto ligand_hydro    = ligand_layer.get_is_hydrophobic();
+   const auto ligand_types    = ligand_layer.get_vinardo_type();
 
-    //Here I need to build the list of pairs of atoms that will be used for the vinardo scoring. 
-    // I need to consider both protein-ligand pairs and ligand-ligand pairs.
+   std::vector<vinardo_ligand_ligand_pair> ll_pairs;
+   auto& ligand = ligand_layer.get_base_molecule();
+   auto graph = mudock::make_graph(ligand.get_bonds(), ligand.num_atoms());
+   const auto num_atoms = static_cast<std::size_t>(ligand.num_atoms());
 
-    const auto protein_radii = protein_layer.get_radius();
-    const auto ligand_radii  = ligand_layer.get_radius();
-    const auto protein_donor    = protein_layer.get_is_hbond_donor();
-    const auto protein_acceptor = protein_layer.get_is_hbond_acceptor();
-    const auto protein_hydro    = protein_layer.get_is_hydrophobic();
-    const auto protein_types    = protein_layer.get_vinardo_type();
-    const auto ligand_donor    = ligand_layer.get_is_hbond_donor();
-    const auto ligand_acceptor = ligand_layer.get_is_hbond_acceptor();
-    const auto ligand_hydro    = ligand_layer.get_is_hydrophobic();
-    const auto ligand_types    = ligand_layer.get_vinardo_type();
+   if (relatively_movable_matrix.size() != num_atoms * num_atoms) {
+      throw std::runtime_error("Vinardo preprocessing requires a ligand mobility matrix");
+   }
+   auto within_three_bonds = precompute_within_n_bonds(graph, num_atoms, 3);
 
-    vinardo_preprocessed_pairs result;
-    //Protein-Ligand Pairs: Cartesian product
-    std::vector<vinardo_protein_ligand_pair> pl_pairs;
-    append_protein_ligand_pairs(pl_pairs,
+   append_ligand_ligand_pairs(ll_pairs,
+                              ligand_layer,
+                              ligand_radii,
+                              ligand_types,
+                              ligand_donor,
+                              ligand_acceptor,
+                              ligand_hydro,
+                              relatively_movable_matrix,
+                              within_three_bonds);
+   return ll_pairs;
+}
+
+inline std::vector<vinardo_protein_ligand_pair> 
+         preprocess_protein_ligand_vinardo(vinardo_layer<mudock::static_containers>& ligand_layer,
+                                          vinardo_layer<mudock::dynamic_containers>& protein_layer){
+   const auto protein_radii = protein_layer.get_radius();
+   const auto ligand_radii  = ligand_layer.get_radius();
+   const auto protein_donor    = protein_layer.get_is_hbond_donor();
+   const auto protein_acceptor = protein_layer.get_is_hbond_acceptor();
+   const auto protein_hydro    = protein_layer.get_is_hydrophobic();
+   const auto protein_types    = protein_layer.get_vinardo_type();
+   const auto ligand_donor    = ligand_layer.get_is_hbond_donor();
+   const auto ligand_acceptor = ligand_layer.get_is_hbond_acceptor();
+   const auto ligand_hydro    = ligand_layer.get_is_hydrophobic();
+   const auto ligand_types    = ligand_layer.get_vinardo_type();
+   std::vector<vinardo_protein_ligand_pair> pl_pairs;
+   append_protein_ligand_pairs(pl_pairs,
                                protein_layer,
                                ligand_layer,
                                protein_radii,
@@ -188,35 +208,10 @@ inline vinardo_preprocessed_pairs preprocess_for_vinardo(
                                ligand_donor,
                                ligand_acceptor,
                                ligand_hydro);
-
-    //Assign the result to the output struct with move so i don't have to copy the vector.
-    result.protein_ligand_pairs = std::move(pl_pairs);
-
-    //Ligand-Ligand Pairs: included only if topological distance >= 4 bonds (excluding 1-2, 1-3, 1-4 interactions, inherited from Vina in Vinardo)
-    std::vector<vinardo_ligand_ligand_pair> ll_pairs; 
-    //I need to compute the graph so I can asses the distance and the relative movement
-    auto& ligand = ligand_layer.get_base_molecule();
-    auto graph = mudock::make_graph(ligand.get_bonds(), ligand.num_atoms());
-    const auto num_atoms = static_cast<std::size_t>(ligand.num_atoms());
-
-    if (relatively_movable_matrix.size() != num_atoms * num_atoms) {
-        throw std::runtime_error("Vinardo preprocessing requires a ligand mobility matrix");
-    }
-    auto within_three_bonds = precompute_within_n_bonds(graph, num_atoms, 3);
-
-    append_ligand_ligand_pairs(ll_pairs,
-                                ligand_layer,
-                                ligand_radii,
-                                ligand_types,
-                                ligand_donor,
-                                ligand_acceptor,
-                                ligand_hydro,
-                                relatively_movable_matrix,
-                                within_three_bonds);
-    result.ligand_ligand_pairs = std::move(ll_pairs);
-
-    return result;
+                        
+   return pl_pairs;
 }
+                                          
 
    
 }//mudock

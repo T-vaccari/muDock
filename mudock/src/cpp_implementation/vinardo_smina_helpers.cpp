@@ -60,7 +60,7 @@ namespace mudock {
 	}
 
 	
-	unsigned smina_num_tors(const static_molecule& ligand, const pdbqt_torsion_tree& tree, std::span<const vinardo_atom_type> ligand_types) {
+	unsigned smina_num_tors(const static_molecule& ligand, std::span<const pdbqt_rotor> rotors, std::span<const vinardo_atom_type> ligand_types) {
 		//Here we count torsions as smina does.
 		//First we count, for each atom, how many bonded atoms are non-hydrogen(so heavy)
 		//Then we consider it a rotable valid only if both the atoms of the couple differ from hydrogen
@@ -84,7 +84,7 @@ namespace mudock {
 		}
 
 		unsigned num_tors = 0;
-		for (const auto& rotor : tree.rotors) {
+		for (const auto& rotor : rotors) {
 			const auto from = rotor.from_atom_index;
 			const auto to = rotor.to_atom_index;
 			if (from >= num_atoms || to >= num_atoms) {

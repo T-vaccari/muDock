@@ -38,7 +38,8 @@ namespace mudock {
 
    vinardo_score_breakdown compute_vinardo_score_breakdown(vinardo_layer<dynamic_containers>& protein,
                                                            vinardo_layer<static_containers>& ligand,
-                                                           vinardo_preprocessed_pairs& preprocessed_pairs);
+                                                           std::vector<vinardo_protein_ligand_pair>& protein_ligand_pairs,
+                                                           std::vector<vinardo_ligand_ligand_pair>& ligand_ligand_pairs);
 
 
    //Fast API's
@@ -46,8 +47,9 @@ namespace mudock {
                                        bool hydrophobic_possible,
                                        bool hbond_possible);
 
-   fp_type vinardo_score(vinardo_layer<dynamic_containers>& protein,
-                        vinardo_layer<static_containers>& ligand,
-                        vinardo_preprocessed_pairs& preprocessed_pairs);
+   fp_type compute_vinardo_score(vinardo_layer<dynamic_containers>& protein,
+                                 vinardo_layer<static_containers>& ligand,
+                                 std::vector<vinardo_protein_ligand_pair>& protein_ligand_pairs,
+                                 std::vector<vinardo_ligand_ligand_pair>& ligand_ligand_pairs);
 
 } // namespace mudock

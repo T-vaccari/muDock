@@ -13,7 +13,7 @@ namespace mudock {
 [[nodiscard]] std::vector<std::uint8_t> build_smina_mobility_matrix(const static_molecule& ligand,const pdbqt_torsion_tree& tree);
 
 [[nodiscard]] unsigned smina_num_tors(const static_molecule& ligand,
-                                                   const pdbqt_torsion_tree& tree,
-                                                   std::span<const vinardo_atom_type> ligand_types);
+                                      std::span<const pdbqt_rotor> rotors,
+                                      std::span<const vinardo_atom_type> ligand_types);
 
 } // namespace mudock

@@ -5,6 +5,7 @@
 #include <concepts>
 #include <mudock/chem/autodock_types.hpp>
 #include <mudock/chem/elements.hpp>
+#include <mudock/format/pdbqt_torsion_tree.hpp>
 #include <mudock/chem/grid_const.hpp>
 #include <mudock/grid/point3D.hpp>
 #include <mudock/molecule/bond.hpp>
@@ -80,6 +81,9 @@ namespace mudock {
 
     // a container that we can use to store key-value properties, e.g. its name
     property_map properties;
+    //Inserted the data here(referred to the struct in torsion_tree.hpp)
+    //when remove or resize are called we have the default struct with valid set at false
+    pdbqt_ligand_info pdbqt_ligand_data;
 
     // utility functions to get information about the bonds
     [[nodiscard]] inline auto get_bonds() { return std::span(std::begin(bond_descriptions), bonds_size); }
@@ -174,10 +178,13 @@ namespace mudock {
     mudock::resize(atom_num_hbond, n_atoms);
     atoms_size = n_atoms;
     bonds_size = n_bonds;
+    pdbqt_ligand_data = {};
   }
   template<class container_aliases>
     requires is_container_specification<container_aliases>
   void molecule<container_aliases>::remove_atom(const int index) {
+    pdbqt_ligand_data = {};
+
     // remove the target atom from all the containers
     mudock::remove_atom(atom_elements, index);
     mudock::remove_atom(x_coordinates, index);
