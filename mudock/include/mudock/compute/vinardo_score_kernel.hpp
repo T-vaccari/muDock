@@ -15,7 +15,6 @@ namespace mudock {
                         const int scores_per_ligand_, 
                         const int batch_ligands_,
                         const int batch_atoms_,
-                        const int* num_atoms_b_,
                         //Ligands positions
                         const fp_type* x_scratch_b_,
                         const fp_type* y_scratch_b_,
@@ -49,7 +48,6 @@ namespace mudock {
                         scores_per_ligand(scores_per_ligand_),
                         batch_ligands(batch_ligands_),
                         batch_atoms(batch_atoms_),
-                        num_atoms_b(num_atoms_b_),
                         x_scratch_b(x_scratch_b_),
                         y_scratch_b(y_scratch_b_),
                         z_scratch_b(z_scratch_b_),
@@ -87,8 +85,6 @@ namespace mudock {
     const int scores_per_ligand;
     const int batch_ligands;
     const int batch_atoms;
-
-    const int* num_atoms_b;
 
     const fp_type* x_scratch_b;
     const fp_type* y_scratch_b;

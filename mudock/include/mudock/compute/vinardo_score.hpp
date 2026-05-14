@@ -65,11 +65,9 @@ namespace mudock {
         prot_y.alloc(protein_atoms);
         prot_z.alloc(protein_atoms);
         //FIll them
-        for (int atom_idx = 0; atom_idx < protein_atoms; ++atom_idx) {
-          prot_x()[atom_idx] = protein.x(atom_idx);
-          prot_y()[atom_idx] = protein.y(atom_idx);
-          prot_z()[atom_idx] = protein.z(atom_idx);
-        }
+        std::memcpy(prot_x(), protein.x(), protein_atoms * sizeof(fp_type));
+        std::memcpy(prot_y(), protein.y(), protein_atoms * sizeof(fp_type));
+        std::memcpy(prot_z(), protein.z(), protein_atoms * sizeof(fp_type));
         //Move data to device
         prot_x.copy_host2device();
         prot_y.copy_host2device();
@@ -96,7 +94,7 @@ namespace mudock {
       const int max_ll_pairs = batch_ligands * batch_atoms * batch_atoms;
       const int scores_per_ligand = std::max(1, static_cast<int>((*this->scratch).configuration.population_number));
       //I need to retrieve the coordinates, that may be modified due to the genetics
-      load_vinardo_scratchs(batch, this->scratch, scores_per_ligand);
+      load_scratchs_ligand_major<queue_type>(batch, this->scratch, scores_per_ligand);
       auto& score_b = (*this->scratch).template get<buffer_data_type::SCORES>();
 
       if (!score_b.is_valid() || score_b.num_elements() != static_cast<std::size_t>(batch_ligands * scores_per_ligand)) {
@@ -184,7 +182,6 @@ namespace mudock {
 
       //create the kernel that will use these data on the device
       //retrieve all the pointers
-      const int* num_atoms_b = (*this->scratch).template get<buffer_data_type::NUM_ATOMS>().dev_pointer();
       const fp_type* x_scratch_b = (*this->scratch).template get<buffer_data_type::X_SCRATCH>().dev_pointer();
       const fp_type* y_scratch_b = (*this->scratch).template get<buffer_data_type::Y_SCRATCH>().dev_pointer();
       const fp_type* z_scratch_b = (*this->scratch).template get<buffer_data_type::Z_SCRATCH>().dev_pointer();
@@ -197,7 +194,6 @@ namespace mudock {
           scores_per_ligand,
           batch_ligands,
           batch_atoms,
-          num_atoms_b,
           x_scratch_b,
           y_scratch_b,
           z_scratch_b,
@@ -307,50 +303,6 @@ namespace mudock {
     vinardo_protein protein_vinardo;
     std::shared_ptr<scratchpad<queue_type>> device_scratch;
     std::unique_ptr<vinardo_score_kernel<queue_type>> kernel;
-
-    // TODO: this local loader is needed because Vinardo currently expects ligand-major coordinates,
-    // i suspect that the general load scratch provided by buffer utils 
-    // works on pose as first ordering, 
-    //but here I would expect to use instead ligand as first ordering entry.
-    static bool load_vinardo_scratchs(batch<static_molecule>& batch,
-                                      std::shared_ptr<scratchpad<queue_type>> scratch,
-                                      const int scores_per_ligand) {
-      auto& scratch_x = scratch->template get<buffer_data_type::X_SCRATCH>();
-      auto& scratch_y = scratch->template get<buffer_data_type::Y_SCRATCH>();
-      auto& scratch_z = scratch->template get<buffer_data_type::Z_SCRATCH>();
-
-      if (scratch_x.is_valid()) {
-        return false;
-      }
-
-      const int batch_ligands = batch.num_ligands;
-      const int batch_atoms = batch.batch_max_atoms;
-      const auto total =
-          static_cast<std::size_t>(batch_ligands) * static_cast<std::size_t>(batch_atoms) *
-          static_cast<std::size_t>(scores_per_ligand);
-      scratch_x.alloc(total);
-      scratch_y.alloc(total);
-      scratch_z.alloc(total);
-
-      for (int ligand_index{0}; ligand_index < batch_ligands; ++ligand_index) {
-        auto& ligand = *batch.molecules[ligand_index];
-        const int num_atoms = ligand.num_atoms();
-        const auto x = ligand.x(), y = ligand.y(), z = ligand.z();
-
-        for (int score_index{0}; score_index < scores_per_ligand; ++score_index) {
-          
-          const int offset = ligand_index * batch_atoms * scores_per_ligand + score_index * batch_atoms;
-          std::memcpy((void*) (scratch_x() + offset), x, num_atoms * sizeof(fp_type));
-          std::memcpy((void*) (scratch_y() + offset), y, num_atoms * sizeof(fp_type));
-          std::memcpy((void*) (scratch_z() + offset), z, num_atoms * sizeof(fp_type));
-        }
-      }
-
-      scratch_x.copy_host2device();
-      scratch_y.copy_host2device();
-      scratch_z.copy_host2device();
-      return true;
-    }
 
     void teardown_impl(batch<static_molecule> &batch) override {
       assert(batch.num_ligands == batch_ligands && "Scoring algorithm received different batch for teardown");

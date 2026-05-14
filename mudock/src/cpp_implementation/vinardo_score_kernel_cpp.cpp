@@ -10,7 +10,6 @@ namespace mudock {
   void calc_vinardo_energy(  const int batch_atoms,
                              const int batch_ligands,
                              const int scores_per_ligand,
-                             const int *__restrict__ num_atoms_b,
                              const fp_type *__restrict__ x_scratch_b,
                              const fp_type *__restrict__ y_scratch_b,
                              const fp_type *__restrict__ z_scratch_b,
@@ -33,7 +32,6 @@ namespace mudock {
                              const std::uint8_t *__restrict__ ll_hydrophobic_possible_b,
                              const std::uint8_t *__restrict__ ll_hbond_possible_b,
                              fp_type *__restrict__ scores_b) {
-    (void) num_atoms_b;
 
     //Pass trough every ligand
     for (int ligand_index{0}; ligand_index < batch_ligands; ++ligand_index) {
@@ -55,22 +53,17 @@ namespace mudock {
 
       //Pass through every pose of the ligand
       for (int pose_index{0}; pose_index < scores_per_ligand; ++pose_index) {
-        // Score the pose pose_index of the ligand ligand_index
-        //I need the coordinates of this specific pose
         //For istance given the x coordinate in the scratch we have this memory layout
         //For each ligand we have all the poses stored contiguously
         // ligand 0
         //   pose 0: atom 0, atom 1, atom 2,
         //   pose 1: atom 0, atom 1, atom 2,
-        //   pose 2: atom 0, atom 1, atom 2,
 
         // ligand 1
         //   pose 0: atom 0, atom 1, atom 2,
         //   pose 1: atom 0, atom 1, atom 2,
-        //   pose 2: atom 0, atom 1, atom 2,
         //batch_ligands = How many ligands in the batch
         //scores per ligand = how many poses per ligand
-        //num_atoms_b[ligand_index] = how many atoms for real in the ligand
         //batch_atoms = padding for every pose (max between all the ligands)
         //So to obtain the offset for ligand_index and pose_index we have to:
         // off = ligand_index * batch_atoms * scores_per_ligand + pose_index * batch_atoms
@@ -177,7 +170,6 @@ namespace mudock {
                                                 batch_atoms,
                                                 batch_ligands,
                                                 scores_per_ligand,
-                                                num_atoms_b,
                                                 x_scratch_b,
                                                 y_scratch_b,
                                                 z_scratch_b,

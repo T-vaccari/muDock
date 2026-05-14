@@ -71,6 +71,47 @@ namespace mudock {
 
   template<typename queue_type>
     requires std::derived_from<queue_type, queue>
+  bool load_scratchs_ligand_major(batch<static_molecule> &batch,
+                                  std::shared_ptr<scratchpad<queue_type>> scratch,
+                                  const int scores_per_ligand = 1) {
+    const auto batch_ligands      = batch.num_ligands;
+    const auto batch_atoms        = batch.batch_max_atoms;
+    const auto tot_atoms_in_batch = batch_ligands * batch_atoms;
+
+    auto &scratch_x = (*scratch).template get<buffer_data_type::X_SCRATCH>();
+    auto &scratch_y = (*scratch).template get<buffer_data_type::Y_SCRATCH>();
+    auto &scratch_z = (*scratch).template get<buffer_data_type::Z_SCRATCH>();
+
+    if (!scratch_x.is_valid()) {
+      const auto total =
+          static_cast<std::size_t>(tot_atoms_in_batch) * static_cast<std::size_t>(scores_per_ligand);
+      scratch_x.alloc(total);
+      scratch_y.alloc(total);
+      scratch_z.alloc(total);
+      for (int ligand_index{0}; ligand_index < batch_ligands; ++ligand_index) {
+        auto &ligand = *batch.molecules[ligand_index];
+
+        const int ligand_offset = ligand_index * batch_atoms * scores_per_ligand;
+        const int num_atoms     = ligand.num_atoms();
+
+        const auto x = ligand.x(), y = ligand.y(), z = ligand.z();
+        for (int score_index = 0; score_index < scores_per_ligand; ++score_index) {
+          const int score_offset = ligand_offset + score_index * batch_atoms;
+          std::memcpy((void *) (scratch_x() + score_offset), x, num_atoms * sizeof(fp_type));
+          std::memcpy((void *) (scratch_y() + score_offset), y, num_atoms * sizeof(fp_type));
+          std::memcpy((void *) (scratch_z() + score_offset), z, num_atoms * sizeof(fp_type));
+        }
+      }
+      scratch_x.copy_host2device();
+      scratch_y.copy_host2device();
+      scratch_z.copy_host2device();
+      return true;
+    } else
+      return false;
+  }
+
+  template<typename queue_type>
+    requires std::derived_from<queue_type, queue>
   bool load_num_rotamers(batch<static_molecule> &batch, std::shared_ptr<scratchpad<queue_type>> scratch) {
     const auto batch_ligands = batch.num_ligands;
 

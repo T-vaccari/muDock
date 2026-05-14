@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 
   std::filesystem::path receptor_path;
   std::filesystem::path ligand_path;
-  std::filesystem::path csv_path = std::filesystem::path{MUDOCK_SOURCE_DIR} / "test/reference/vinardo_smina_affinity.csv";
+  std::filesystem::path reference_path;
   mudock::fp_type tolerance = mudock::fp_type{1e-3};
 
   po::options_description arguments_description("Available options");
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
   arguments_description.add_options()("ligand,l",
                                       po::value(&ligand_path),
                                       "Path to the ligand PDBQT file");
-  arguments_description.add_options()("csv", po::value(&csv_path)->default_value(csv_path), "Path to reference CSV");
+  arguments_description.add_options()("reference", po::value(&reference_path), "Path to reference affinity");
   arguments_description.add_options()(
       "tolerance", po::value(&tolerance)->default_value(tolerance), "Absolute tolerance");
 
@@ -104,57 +104,33 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
   }
 
-  if (!receptor_path.empty() || !ligand_path.empty()) {
-    if (receptor_path.empty() || ligand_path.empty()) {
-      throw std::runtime_error("Both receptor and ligand paths are required");
-    }
+  if (receptor_path.empty() || ligand_path.empty()) {
+    throw std::runtime_error("Both receptor and ligand paths are required");
+  }
 
-    mudock::info(std::format("Vinardo affinity: {}", compute_vinardo_affinity(receptor_path, ligand_path)));
+  const auto mudock_affinity = compute_vinardo_affinity(receptor_path, ligand_path);
+  if (reference_path.empty()) {
+    mudock::info(std::format("Vinardo affinity: {}", mudock_affinity));
     return EXIT_SUCCESS;
   }
 
-  std::ifstream input{csv_path};
+  std::ifstream input{reference_path};
   if (!input) {
-    throw std::runtime_error(std::format("Cannot open reference CSV {}", csv_path.string()));
+    throw std::runtime_error(std::format("Cannot open reference file {}", reference_path.string()));
   }
 
-  bool failed = false;
-  std::string line;
-  std::getline(input, line);
-  while (std::getline(input, line)) {
-    if (line.empty()) {
-      continue;
-    }
+  mudock::fp_type smina_affinity{};
+  input >> smina_affinity;
+  const auto diff = mudock_affinity - smina_affinity;
+  mudock::info(std::format("muDock={} smina={} diff={}", mudock_affinity, smina_affinity, diff));
 
-    std::stringstream ss{line};
-    std::string name;
-    std::string receptor;
-    std::string ligand;
-    std::string smina_affinity_field;
-    std::getline(ss, name, ',');
-    std::getline(ss, receptor, ',');
-    std::getline(ss, ligand, ',');
-    std::getline(ss, smina_affinity_field, ',');
-
-    const auto receptor_csv_path = std::filesystem::path{MUDOCK_SOURCE_DIR} / receptor;
-    const auto ligand_csv_path = std::filesystem::path{MUDOCK_SOURCE_DIR} / ligand;
-    const auto smina_affinity = static_cast<mudock::fp_type>(std::stod(smina_affinity_field));
-    const auto mudock_affinity = compute_vinardo_affinity(receptor_csv_path, ligand_csv_path);
-    const auto diff = mudock_affinity - smina_affinity;
-    mudock::info(std::format("{} muDock={} smina={} diff={}",
-                             name,
-                             mudock_affinity,
-                             smina_affinity,
-                             diff));
-
-    if (std::abs(diff) > tolerance) {
-      failed = true;
-      mudock::error(std::format("{} exceeds tolerance {} with abs diff {}",
-                                name,
-                                tolerance,
-                                std::abs(diff)));
-    }
+  if (std::abs(diff) > tolerance) {
+    mudock::error(std::format("{} exceeds tolerance {} with abs diff {}",
+                              ligand_path.string(),
+                              tolerance,
+                              std::abs(diff)));
+    return EXIT_FAILURE;
   }
 
-  return failed ? EXIT_FAILURE : EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
