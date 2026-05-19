@@ -94,7 +94,7 @@ namespace mudock {
       const int max_ll_pairs = batch_ligands * batch_atoms * batch_atoms;
       const int scores_per_ligand = std::max(1, static_cast<int>((*this->scratch).configuration.population_number));
       //I need to retrieve the coordinates, that may be modified due to the genetics
-      load_scratchs_ligand_major<queue_type>(batch, this->scratch, scores_per_ligand);
+      load_scratchs<queue_type>(batch, this->scratch, scores_per_ligand);
       auto& score_b = (*this->scratch).template get<buffer_data_type::SCORES>();
 
       if (!score_b.is_valid() || score_b.num_elements() != static_cast<std::size_t>(batch_ligands * scores_per_ligand)) {
