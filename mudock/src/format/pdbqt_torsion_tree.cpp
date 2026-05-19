@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace mudock {
@@ -82,18 +83,7 @@ void convert_ids_to_indices(pdbqt_torsion_tree& tree,
 }
 
 //Same parsing as in smina
-pdbqt_torsion_tree parse_pdbqt_torsion_tree(const std::filesystem::path& pdbqt_path) {
-  //This is the top level function in which we build the three
-  std::ifstream input{pdbqt_path};
-  if (!input.good()) {
-    throw std::runtime_error("Cannot open PDBQT file");
-  }
-
-  std::vector<std::string> lines;
-  std::string line;
-  while (std::getline(input, line)) {
-    lines.push_back(line);
-  }
+pdbqt_torsion_tree parse_pdbqt_torsion_tree(const std::vector<std::string>& lines) {
   pdbqt_torsion_tree tree;
   tree.storage.reserve(lines.size());
   tree.rotors.reserve(lines.size());
@@ -143,6 +133,30 @@ pdbqt_torsion_tree parse_pdbqt_torsion_tree(const std::filesystem::path& pdbqt_p
   // Before returning, they are converted in-place to molecule atom indices.
   convert_ids_to_indices(tree, atom_id_to_index);
   return tree;
+}
+//Overloaded so now we are able to pass directly the string as description intead of the file
+pdbqt_torsion_tree parse_pdbqt_torsion_tree(std::string_view pdbqt_description) {
+  std::vector<std::string> lines;
+  std::string line;
+  std::istringstream input{std::string{pdbqt_description}};
+  while (std::getline(input, line)) {
+    lines.push_back(line);
+  }
+  return parse_pdbqt_torsion_tree(lines);
+}
+
+pdbqt_torsion_tree parse_pdbqt_torsion_tree(const std::filesystem::path& pdbqt_path) {
+  std::ifstream input{pdbqt_path};
+  if (!input.good()) {
+    throw std::runtime_error("Cannot open PDBQT file");
+  }
+
+  std::vector<std::string> lines;
+  std::string line;
+  while (std::getline(input, line)) {
+    lines.push_back(line);
+  }
+  return parse_pdbqt_torsion_tree(lines);
 }
 
 } // namespace mudock

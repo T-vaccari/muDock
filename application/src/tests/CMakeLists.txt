@@ -31,10 +31,7 @@ set_target_properties(
   PROPERTIES CXX_STANDARD 20
               CXX_STANDARD_REQUIRED ON
               CXX_EXTENSIONS OFF)
-target_compile_definitions(test_score_vinardo
-                           PRIVATE MUDOCK_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(test_score_vinardo libmudock Boost::program_options)
-add_test(NAME test_score_vinardo COMMAND test_score_vinardo)
 
 add_executable_mudock(test_score_adt_impl
                       "${CMAKE_CURRENT_SOURCE_DIR}/adt_impl_score_test.cpp")

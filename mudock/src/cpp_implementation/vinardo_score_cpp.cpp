@@ -96,12 +96,11 @@ namespace mudock {
 
    vinardo_score_breakdown compute_vinardo_score_breakdown(vinardo_layer<dynamic_containers>& protein,
                                                            vinardo_layer<static_containers>& ligand,
-                                                           vinardo_preprocessed_pairs& preprocessed_pairs){
+                                                           std::vector<vinardo_protein_ligand_pair>& pl_pairs,
+                                                           std::vector<vinardo_ligand_ligand_pair>& ll_pairs){
 
       fp_type pl_score = fp_type{0};
       fp_type ll_score = fp_type{0};
-      auto& pl_pairs = preprocessed_pairs.protein_ligand_pairs;
-      auto& ll_pairs = preprocessed_pairs.ligand_ligand_pairs;
 
 
       //Now we have to process all the couples, the vinardo scoring function is characterized by being
@@ -153,13 +152,12 @@ namespace mudock {
       return vinardo_score_breakdown{pl_score, ll_score, pl_score + ll_score};
    }
 
-   fp_type vinardo_score(vinardo_layer<dynamic_containers>& protein,
-                        vinardo_layer<static_containers>& ligand,
-                        vinardo_preprocessed_pairs& preprocessed_pairs){
+   fp_type compute_vinardo_score(vinardo_layer<dynamic_containers>& protein,
+                                 vinardo_layer<static_containers>& ligand,
+                                 std::vector<vinardo_protein_ligand_pair>& pl_pairs,
+                                 std::vector<vinardo_ligand_ligand_pair>& ll_pairs){
 
       fp_type score = fp_type{0};
-      auto& pl_pairs = preprocessed_pairs.protein_ligand_pairs;
-      auto& ll_pairs = preprocessed_pairs.ligand_ligand_pairs;
 
       for(const auto& pair: pl_pairs){
          const fp_type dx = protein().x(pair.protein_atom_idx) - ligand().x(pair.ligand_atom_idx);
