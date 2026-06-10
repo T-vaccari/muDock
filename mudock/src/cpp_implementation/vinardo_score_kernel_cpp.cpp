@@ -3,7 +3,6 @@
 #include <mudock/compute/vinardo_scoring_function.hpp>
 
 #include <cmath>
-#include <limits>
 
 namespace mudock {
 
@@ -46,11 +45,6 @@ namespace mudock {
 
       const int ll_offset = ll_offsets_b[ligand_index];
       const int ll_count  = ll_counts_b[ligand_index];
-      //In the multi-pose context we must keep track of the best pose to apply the correction factor
-      //During affinity calculation
-      int best_pose_index    = 0;
-      fp_type best_raw_score = std::numeric_limits<fp_type>::max();
-
       //Pass through every pose of the ligand
       for (int pose_index{0}; pose_index < scores_per_ligand; ++pose_index) {
         //For instance given the x coordinate in the scratch we have this memory layout
@@ -125,25 +119,13 @@ namespace mudock {
         const int score_offset = ligand_index * scores_per_ligand + pose_index;
         inter_scores_b[score_offset] = pl_score;
         intra_scores_b[score_offset] = ll_score;
-        //Keep track of the best pose
-        const fp_type raw_score = pl_score + ll_score;
-        if (raw_score < best_raw_score) {
-          best_raw_score  = raw_score;
-          best_pose_index = pose_index;
-        }
 
       }
-
-      const int best_score_offset         = ligand_index * scores_per_ligand + best_pose_index;
-      const fp_type reference_intra_score = intra_scores_b[best_score_offset];
 
       for (int pose_index{0}; pose_index < scores_per_ligand; ++pose_index) {
         const int score_offset = ligand_index * scores_per_ligand + pose_index;
         //Score pre affinity(as in the paper we correct with the reference intra score term)
-        const fp_type corrected_score = pose_index == best_pose_index
-                                            ? inter_scores_b[score_offset]
-                                            : inter_scores_b[score_offset] + intra_scores_b[score_offset] -
-                                                  reference_intra_score;
+        const fp_type corrected_score = inter_scores_b[score_offset];
 
         //the memory layout of scores_b is the following:
         //ligand 0: pose 0, pose 1, pose 2,
